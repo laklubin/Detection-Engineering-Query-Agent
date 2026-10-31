@@ -202,6 +202,14 @@ The frontend is a static site on GitHub Pages; the API is a Cloudflare Worker, b
 GitHub Pages cannot run server-side handlers or hold a runtime secret. Both live in this
 repository and deploy from GitHub Actions. See [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
+Two one-time steps need a repository admin and cannot be automated:
+
+1. **Settings → Pages → Source: GitHub Actions** — the Actions token is not permitted to
+   create a Pages site, so the deploy workflow fails at `configure-pages` until this is set.
+2. **Cloudflare Worker secrets** — `wrangler secret put HF_TOKEN` and
+   `wrangler secret put SESSION_SIGNING_KEY`. Without `HF_TOKEN` the backend runs in
+   labelled demo mode rather than performing live inference.
+
 ## Licence
 
 Apache-2.0. See [`LICENSE`](LICENSE).

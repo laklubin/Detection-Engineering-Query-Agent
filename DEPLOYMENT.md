@@ -124,9 +124,20 @@ Check that `"mode"` is `"live"` and `"model"` names your configured model. If it
 
 ## 3. Deploy the frontend to GitHub Pages
 
-### 3.1 Enable Pages
+### 3.1 Enable Pages (required, one time, by a repository admin)
 
 **Settings → Pages → Build and deployment → Source: GitHub Actions.**
+
+This step cannot be automated. The Actions token is not permitted to create a Pages
+site, so until someone flips this setting the deploy workflow fails at `configure-pages`
+with:
+
+```
+Get Pages site failed. Please verify that the repository has Pages enabled
+```
+
+Everything before that step — typecheck, tests, build and the bundle secret scan — still
+runs and must pass.
 
 ### 3.2 Publish the API URL
 
