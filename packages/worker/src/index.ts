@@ -54,6 +54,7 @@ const HTTP_STATUS: Readonly<Record<ErrorCode, number>> = {
   model_unavailable: 503,
   credits_exhausted: 503,
   upstream_timeout: 504,
+  upstream_unreachable: 502,
   invalid_model_output: 502,
   missing_credentials: 503,
   internal_error: 500,

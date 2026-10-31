@@ -256,12 +256,16 @@ export async function createChatCompletion(
         }
         const aborted =
           (error as { name?: string }).name === 'AbortError' || (error as { name?: string }).name === 'TimeoutError';
+        // A transport failure is not the service reporting a problem: nothing
+        // was received at all. Reporting it as "model unavailable" sends the
+        // caller looking at the model when the real cause is connectivity, a
+        // blocked cross-origin request, or an intercepting proxy.
         lastError = aborted
           ? new InferenceError(
               'upstream_timeout',
               `The inference request exceeded the ${Math.round(config.timeoutMs / 1000)}s timeout.`,
             )
-          : new InferenceError('model_unavailable', 'The inference service could not be reached.');
+          : new InferenceError('upstream_unreachable', 'The inference service could not be reached.');
         if (attempt < config.maxRetries) {
           await sleep(backoffMs(attempt, random));
           continue;

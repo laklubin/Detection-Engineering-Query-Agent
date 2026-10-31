@@ -19,7 +19,16 @@ import {
   type GenerateResponse,
 } from '@detectionforge/core';
 import { ApiError, DetectionForgeApi, type Catalog, type Health } from './lib/api.js';
+import {
+  buildConfig,
+  describeBrowserInferenceFailure,
+  forget as forgetKey,
+  loadRemembered,
+  remember as rememberKey,
+  type InferenceSettings,
+} from './lib/byok.js';
 import { downloadText } from './lib/download.js';
+import { InferenceSettingsPanel } from './components/InferenceSettings.js';
 import { RequirementForm, type FormState } from './components/RequirementForm.js';
 import { UseCaseCard } from './components/UseCaseCard.js';
 import {
@@ -79,7 +88,14 @@ export function App(): ReactNode {
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [statusLine, setStatusLine] = useState<string>('Ready.');
+  const [byok, setByok] = useState<InferenceSettings | null>(null);
   const logSourceInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Restore a key the visitor chose to keep for this tab.
+  useEffect(() => {
+    const stored = loadRemembered();
+    if (stored) setByok({ ...stored, remember: true });
+  }, []);
 
   // --- bootstrap: health + catalogue ---------------------------------------
   useEffect(() => {
@@ -123,7 +139,13 @@ export function App(): ReactNode {
       setPhase('generating');
       setError(null);
       setResult(null);
-      setStatusLine(localDemo ? 'Matching against the detection template catalogue…' : 'Validating input and generating…');
+      setStatusLine(
+        byok
+          ? 'Asking your configured model…'
+          : localDemo
+            ? 'Matching against the detection template catalogue…'
+            : 'Validating input and generating…',
+      );
 
       const request = {
         requirement: form.requirement,
@@ -133,7 +155,16 @@ export function App(): ReactNode {
 
       try {
         let response: GenerateResponse;
-        if (localDemo) {
+        if (byok) {
+          // The visitor's own key. The same core pipeline runs here as on the
+          // server: sanitise, guardrails, inference, schema validation,
+          // adapters. The key reaches Hugging Face and nothing else.
+          const outcome = await generateDetections(request, {
+            mode: 'live',
+            huggingFace: buildConfig(byok),
+          });
+          response = outcome.response;
+        } else if (localDemo) {
           // Runs the identical core pipeline in the browser against the
           // detection-template catalogue. No credential is involved and
           // nothing the user typed leaves the page.
@@ -153,12 +184,16 @@ export function App(): ReactNode {
           );
         }
       } catch (caught) {
+        const rawCode = (caught as { code?: string }).code ?? 'internal_error';
+        const rawMessage = caught instanceof Error ? caught.message : 'Generation failed.';
         const apiError =
           caught instanceof ApiError
             ? caught
             : new ApiError(
-                (caught as { code?: string }).code ?? 'internal_error',
-                caught instanceof Error ? caught.message : 'Generation failed.',
+                rawCode,
+                // A browser-side call fails in ways a server call does not, so
+                // translate the code into something the visitor can act on.
+                byok ? describeBrowserInferenceFailure(rawCode, rawMessage) : rawMessage,
                 { details: [...((caught as { details?: string[] }).details ?? [])] },
               );
         setError(apiError);
@@ -166,7 +201,7 @@ export function App(): ReactNode {
         setStatusLine('Generation failed.');
       }
     },
-    [api, form],
+    [api, form, byok],
   );
 
   function clearAll(): void {
@@ -188,9 +223,22 @@ export function App(): ReactNode {
     }
   }
 
+  function applyKey(next: InferenceSettings): void {
+    setByok(next);
+    if (next.remember) rememberKey({ token: next.token, model: next.model });
+    else forgetKey();
+    setStatusLine(`Live inference enabled with ${next.model}.`);
+  }
+
+  function clearKey(): void {
+    setByok(null);
+    forgetKey();
+    setStatusLine('Key removed. Back to template mode.');
+  }
+
   const busy = phase === 'generating';
   const offline = backendReachable === false;
-  const effectiveMode = result?.mode ?? health?.mode ?? (offline ? 'demo' : null);
+  const effectiveMode = byok ? 'live' : (result?.mode ?? health?.mode ?? (offline ? 'demo' : null));
 
   return (
     <div className="mx-auto max-w-[94rem] px-4 py-6 sm:px-6 lg:px-8">
@@ -246,6 +294,14 @@ export function App(): ReactNode {
             logSourceInputRef={logSourceInputRef}
           />
 
+          <InferenceSettingsPanel
+            settings={byok}
+            onApply={applyKey}
+            onClear={clearKey}
+            active={byok !== null}
+            busy={busy}
+          />
+
           <div
             className="dfai-panel p-4 text-sm"
             role="status"
@@ -258,7 +314,7 @@ export function App(): ReactNode {
             <p className="mt-1 leading-relaxed text-[var(--color-forge-text)]/90">{statusLine}</p>
           </div>
 
-          {offline && ALLOW_LOCAL_DEMO ? (
+          {offline && ALLOW_LOCAL_DEMO && !byok ? (
             <div className="rounded-xl border border-violet-500/40 bg-violet-500/10 p-4 text-sm text-violet-100">
               <p className="font-semibold text-violet-200">Running in template mode</p>
               <p className="mt-1 leading-relaxed">

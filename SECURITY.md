@@ -38,6 +38,7 @@ after exposure. Deployment is never marked secure while a scan is failing.
 | `SESSION_SIGNING_KEY` | Cloudflare Worker secret only | Attacker mints session tokens and bypasses rate limits and quotas |
 | `CLOUDFLARE_API_TOKEN` | GitHub Actions secret only | Attacker redeploys or alters the backend |
 | User-submitted requirement text | Transient, in-process only | Prompt content is never stored or logged |
+| A visitor's own Hugging Face token (bring-your-own-key) | That visitor's browser only | Their inference credit is spent; never reaches this project or its servers |
 
 ### Trust boundaries
 
@@ -68,6 +69,29 @@ workflow.
 - `scripts/scan-build-artifacts.mjs` fails the build if anything credential-shaped
   reaches a shipped bundle. It reports shape and location, never the value.
 - The logger routes every string field through a redactor as a backstop.
+
+### Bring-your-own-key inference
+
+A visitor may supply their own Hugging Face token so a static deployment can produce live
+model output. The controls on that path:
+
+- The endpoint is a compiled constant, not a field. The token is attached to
+  `https://router.huggingface.co/v1` and to nothing else, so a user-supplied endpoint
+  cannot be used to talk someone into posting their own credential to an attacker's
+  collector.
+- The token is never sent to this project's own origin, never logged, and never rendered
+  in clear text — the UI shows a masked form only.
+- Nothing is persisted by default. Opting in stores it in `sessionStorage`, never
+  `localStorage`, so it dies with the tab rather than outliving it on a shared machine.
+- The token's shape is validated before any request, so a key for a different provider is
+  not transmitted to Hugging Face by mistake.
+- Guardrails, sanitisation, output safety scanning and schema validation run exactly as
+  they do server-side; a rejected request still costs no inference call.
+
+The residual risk is inherent and stated in the UI: anyone pasting a credential into a web
+page is trusting that page. The mitigation is scope — the setup instructions tell the
+visitor to create a fine-grained token with only *Make calls to Inference Providers*, so a
+leak costs inference credit and nothing else.
 
 ### Authentication and authorisation
 

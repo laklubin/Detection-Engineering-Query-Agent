@@ -179,6 +179,21 @@ describe('createChatCompletion — availability failures', () => {
     ).rejects.toMatchObject({ code: 'model_unavailable' });
   });
 
+  it('distinguishes a transport failure from the service reporting a problem', async () => {
+    // Nothing was received at all. Calling this "model unavailable" would send
+    // the caller looking at the model instead of at connectivity, a blocked
+    // cross-origin request, or an intercepting proxy.
+    const fetchImpl: FetchLike = async () => {
+      throw new TypeError('Failed to fetch');
+    };
+    const error = await createChatCompletion({ ...CONFIG, maxRetries: 0, fallbackModels: [] }, MESSAGES, {
+      fetchImpl,
+      ...noSleep,
+    }).catch((e: unknown) => e);
+    expect((error as InferenceError).code).toBe('upstream_unreachable');
+    expect((error as InferenceError).code).not.toBe('model_unavailable');
+  });
+
   it('maps an aborted request to upstream_timeout', async () => {
     const fetchImpl: FetchLike = async () => {
       const error = new Error('aborted');

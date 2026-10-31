@@ -330,6 +330,7 @@ export const ERROR_CODES = [
   'model_unavailable',
   'credits_exhausted',
   'upstream_timeout',
+  'upstream_unreachable',
   'invalid_model_output',
   'missing_credentials',
   'internal_error',

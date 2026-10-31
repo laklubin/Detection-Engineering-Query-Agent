@@ -78,23 +78,41 @@ These are enforced in code and covered by tests, not just stated:
 
 Full details: [`SECURITY.md`](SECURITY.md). Design: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
-## Two ways it answers
+## Three ways it answers
 
-| | Live inference | Template mode |
-| --- | --- | --- |
-| Needs a credential | yes, `HF_TOKEN` on the backend | no |
-| Where it runs | Cloudflare Worker | the Worker, or entirely in your browser |
-| Detection logic from | a language model, schema-validated | a catalogue of human-authored templates |
-| Handles a novel requirement | yes | no — it says so instead of guessing |
-| Guardrails, sanitisation, 7 adapters, validation | identical | identical |
+| | Template mode | Your own key | Hosted backend |
+| --- | --- | --- | --- |
+| Credential needed | none | yours, in your browser | the operator's, on the server |
+| Where inference runs | nowhere — pure matching | browser → Hugging Face | Worker → Hugging Face |
+| Detection logic from | human-authored templates | a language model | a language model |
+| Handles a novel requirement | no — it says so | yes | yes |
+| Who pays | nobody | you | the operator |
+| Guardrails, sanitisation, 7 adapters, validation | identical | identical | identical |
 
-The public GitHub Pages site runs in **template mode**, because a static bundle is world
-readable and could not hold an inference token safely. Your requirement is matched
-against the catalogue in your own browser; nothing you type leaves the page.
+The public site defaults to **template mode**: your requirement is matched against the
+catalogue in your own browser and nothing you type leaves the page. When nothing matches
+closely enough it asks you to rephrase rather than returning the nearest entry — a
+confident-looking detection for a requirement it did not understand is the one failure
+mode worth refusing outright.
 
-When nothing matches closely enough, template mode asks you to rephrase rather than
-return the nearest entry. Returning a confident-looking detection for a requirement it
-did not understand is the one failure mode worth refusing outright.
+**Your own key** turns on live model answers with no backend at all. Paste a Hugging Face
+token into the page and it calls Hugging Face directly from your browser. Any model
+Hugging Face can route to works, so this is also how you use a different cloud LLM —
+type its id, optionally with `:provider` to pin one.
+
+The destination is a hardcoded constant, not a configurable field: your token is attached
+to `router.huggingface.co` and can reach nowhere else, so nobody can talk you into
+pointing this page at their collector. It is held in memory by default, never in
+`localStorage`; if you ask it to persist it goes to `sessionStorage` and dies with the
+tab. It is never sent to this project.
+
+**Hosted backend** is the mode to use when visitors should not need their own key: deploy
+the Worker with `HF_TOKEN` as a secret, and the page uses it for everyone. The token
+lives only in the Worker environment.
+
+> A GitHub Pages bundle is world readable, so the project's own token can never go in it.
+> That is why live inference needs either your key or a backend — there is no third
+> option that keeps a shared key secret in a static page.
 
 ## Repository layout
 
@@ -209,7 +227,7 @@ Generated Sigma rules are additionally validated in CI by **pySigma**, the Sigma
 reference implementation: the emitted YAML is parsed, and every detection condition is
 resolved against the selections it references (`scripts/validate-sigma.py`).
 
-798 tests across the three packages.
+829 tests across the three packages.
 
 Every template in the catalogue is covered by an invariant: its own example phrasing must
 survive sanitisation, pass the guardrails, and rank that template first — so no entry can
