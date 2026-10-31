@@ -1,0 +1,78 @@
+# Gitleaks configuration for DetectionForge AI.
+#
+# Extends the upstream default rule set and adds project-specific rules.
+#
+# IMPORTANT: the allowlist below enumerates SPECIFIC synthetic values used by the
+# test suites and the placeholder in .env.example. It deliberately does NOT
+# allowlist whole directories: a real credential accidentally committed to a test
+# file must still be caught.
+
+title = "DetectionForge AI gitleaks config"
+
+[extend]
+useDefault = true
+
+# --- project-specific rules -------------------------------------------------
+
+[[rules]]
+id = "huggingface-access-token"
+description = "Hugging Face access token"
+regex = '''\bhf_[A-Za-z0-9]{20,}\b'''
+keywords = ["hf_"]
+
+[[rules]]
+id = "detectionforge-session-signing-key"
+description = "Session signing key assigned a real-looking value"
+regex = '''SESSION_SIGNING_KEY\s*[:=]\s*["']?(?!0{32})[A-Fa-f0-9]{32,}'''
+keywords = ["SESSION_SIGNING_KEY"]
+
+[[rules]]
+id = "cloudflare-api-token"
+description = "Cloudflare API token"
+regex = '''CLOUDFLARE_API_TOKEN\s*[:=]\s*["']?[A-Za-z0-9_-]{30,}'''
+keywords = ["CLOUDFLARE_API_TOKEN"]
+
+# --- allowlist ---------------------------------------------------------------
+
+[allowlist]
+description = "Documented placeholders and synthetic, non-sensitive test fixtures"
+
+paths = [
+  # This file necessarily contains the patterns it searches for.
+  '''(^|/)\.gitleaks\.toml$''',
+  '''(^|/)package-lock\.json$''',
+]
+
+regexes = [
+  # ---- placeholders in the committed environment template ----
+  '''hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx''',
+  '''SESSION_SIGNING_KEY=0{64}''',
+
+  # ---- synthetic fixtures: packages/core/tests, packages/worker/tests ----
+  # Sequential-alphabet values chosen so they are obviously not real keys.
+  '''hf_AbCdEfGhIjKlMnOpQrStUvWxYz0123''',
+  '''hf_AbCdEfGhIjKlMnOpQrStUvWx0123''',
+  '''hf_(?:unit_)?test_token_value_placeholder''',
+  '''hf_leaked_value_should_not_appear''',
+  '''ghp_0123456789abcdefghijklmnopqrstuvwx''',
+  # AWS's own documentation example access key id.
+  '''AKIAIOSFODNN7EXAMPLE''',
+  # The canonical jwt.io sample token used to test JWT redaction.
+  '''eyJhbGciOiJIUzI1NiJ9\.eyJzdWIiOiIxMjM0NTY3ODkwIn0\.dBjftJeZ4CVPmB92K27uhbUJU1p1r_wW1gFWFOEjXk''',
+  # Truncated, non-functional key stubs used to test block detection.
+  '''-----BEGIN (?:RSA )?PRIVATE KEY-----(?:\\n)?MIIB[A-Za-z0-9+/=]{0,16}(?:\\n)?-----END (?:RSA )?PRIVATE KEY-----''',
+  # Local development signing key (never used outside a developer machine).
+  '''dev_only_local_signing_key_0+''',
+  '''0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef''',
+  '''ffffffffffffffffffffffffffffffff''',
+  # Fixed strings used to assert header/credential redaction behaviour.
+  '''Bearer abcdef1234567890xyz''',
+  '''abcd1234efgh5678''',
+  '''Sup3rSecretValue!''',
+  '''hunter2''',
+  # Test payment card number reserved for testing (Luhn-valid, non-issuable).
+  '''4111111111111111''',
+
+  # ---- redaction placeholders emitted by the sanitiser ----
+  '''\[REDACTED_[A-Z_]+\]''',
+]

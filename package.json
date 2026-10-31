@@ -1,0 +1,40 @@
+{
+  "name": "detectionforge-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DetectionForge AI \u2014 From Threat Detection Logic to Multi-SIEM Queries",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "workspaces": [
+    "packages/core",
+    "packages/worker",
+    "packages/web"
+  ],
+  "scripts": {
+    "build": "npm run build -w @detectionforge/core && npm run build -w @detectionforge/worker && npm run build -w @detectionforge/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint .",
+    "test": "npm run test --workspaces --if-present",
+    "test:coverage": "npm run test:coverage -w @detectionforge/core",
+    "dev:api": "npm run dev -w @detectionforge/worker",
+    "dev:web": "npm run dev -w @detectionforge/web",
+    "audit:deps": "npm audit --audit-level=high",
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run build && node scripts/scan-build-artifacts.mjs packages/web/dist",
+    "lint:fix": "eslint . --fix",
+    "docs": "npm run build -w @detectionforge/core && node scripts/generate-docs.mjs",
+    "docs:check": "npm run docs && git diff --exit-code -- docs/"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.14.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "typescript-eslint": "^8.72.1"
+  },
+  "overrides": {
+    "minimatch": "^11.0.1"
+  }
+}

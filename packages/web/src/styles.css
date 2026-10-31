@@ -1,0 +1,140 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-forge-bg: #070b14;
+  --color-forge-panel: #0d1424;
+  --color-forge-panel-2: #121b2e;
+  --color-forge-border: #1e2a42;
+  --color-forge-border-strong: #2b3b5c;
+  --color-forge-text: #e6edf8;
+  --color-forge-muted: #93a4c2;
+  --color-forge-accent: #22d3ee;
+  --color-forge-accent-2: #34d399;
+  --color-forge-warn: #fbbf24;
+  --color-forge-danger: #f87171;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1100px 520px at 12% -12%, rgba(34, 211, 238, 0.11), transparent 60%),
+      radial-gradient(900px 520px at 88% 0%, rgba(52, 211, 153, 0.09), transparent 58%),
+      var(--color-forge-bg);
+    color: var(--color-forge-text);
+    font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-forge-accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: rgba(34, 211, 238, 0.3);
+  }
+}
+
+@layer components {
+  .dfai-panel {
+    background: color-mix(in srgb, var(--color-forge-panel) 88%, transparent);
+    border: 1px solid var(--color-forge-border);
+    border-radius: 0.875rem;
+    backdrop-filter: blur(6px);
+  }
+
+  .dfai-input {
+    width: 100%;
+    background: var(--color-forge-panel-2);
+    border: 1px solid var(--color-forge-border-strong);
+    border-radius: 0.625rem;
+    padding: 0.625rem 0.75rem;
+    color: var(--color-forge-text);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .dfai-input::placeholder {
+    color: color-mix(in srgb, var(--color-forge-muted) 75%, transparent);
+  }
+
+  .dfai-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    border-radius: 0.625rem;
+    padding: 0.55rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: filter 120ms ease, background-color 120ms ease;
+  }
+
+  .dfai-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .dfai-btn-primary {
+    background: linear-gradient(180deg, var(--color-forge-accent), #0ea5b7);
+    color: #04121a;
+  }
+
+  .dfai-btn-primary:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+
+  .dfai-btn-ghost {
+    background: var(--color-forge-panel-2);
+    border-color: var(--color-forge-border-strong);
+    color: var(--color-forge-text);
+  }
+
+  .dfai-btn-ghost:hover:not(:disabled) {
+    background: #18233b;
+  }
+
+  .dfai-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border-radius: 9999px;
+    border: 1px solid var(--color-forge-border-strong);
+    background: var(--color-forge-panel-2);
+    padding: 0.15rem 0.55rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--color-forge-muted);
+  }
+
+  .dfai-code {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    white-space: pre;
+    tab-size: 2;
+  }
+}
+
+/* Syntax highlighting tokens. Applied as class names on escaped text nodes
+   only — the application never injects HTML. */
+.tok-comment { color: #5d7291; font-style: italic; }
+.tok-string  { color: #7ee3b8; }
+.tok-number  { color: #f0b86e; }
+.tok-keyword { color: #7cc4ff; font-weight: 600; }
+.tok-command { color: #c5a3ff; font-weight: 600; }
+.tok-field   { color: #e6edf8; }
+.tok-op      { color: #9fb3d1; }
+.tok-key     { color: #7cc4ff; }
+.tok-warn    { color: #fca5a5; background: rgba(248, 113, 113, 0.12); border-radius: 3px; padding: 0 2px; }

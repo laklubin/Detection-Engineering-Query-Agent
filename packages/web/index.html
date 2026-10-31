@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      Content Security Policy.
+      GitHub Pages cannot set response headers, so the policy is delivered as a
+      meta element. connect-src is intentionally broad enough to reach the
+      configured Worker origin over HTTPS only; no inline event handlers,
+      objects, frames or remote scripts are permitted.
+
+      frame-ancestors is deliberately omitted: browsers ignore it in a meta
+      policy. Clickjacking protection comes from the X-Frame-Options /
+      frame-ancestors response headers configured at the host (see
+      DEPLOYMENT.md); the API Worker sets both on its own responses.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https: http://localhost:8787 http://127.0.0.1:8787; object-src 'none'; base-uri 'self'; form-action 'none'"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      name="description"
+      content="DetectionForge AI — convert threat detection logic into Splunk SPL, Microsoft Sentinel KQL, IBM QRadar AQL, Elastic EQL/ES|QL, Securonix, FortiSIEM and Sigma."
+    />
+    <meta name="color-scheme" content="dark light" />
+    <title>DetectionForge AI — From Threat Detection Logic to Multi-SIEM Queries</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1220'/%3E%3Cpath d='M16 4l9 4v8c0 6-4 9-9 12-5-3-9-6-9-12V8z' fill='none' stroke='%2322d3ee' stroke-width='2'/%3E%3Cpath d='M11 16l3.5 3.5L21 13' fill='none' stroke='%2334d399' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>DetectionForge AI requires JavaScript to generate detection queries.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

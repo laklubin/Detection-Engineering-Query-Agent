@@ -1,0 +1,77 @@
+name: Deploy API Worker
+
+# Deploys the authenticated backend to Cloudflare Workers.
+#
+# Required repository secrets (Settings > Secrets and variables > Actions):
+#   CLOUDFLARE_API_TOKEN  - scoped to "Edit Cloudflare Workers" only
+#   CLOUDFLARE_ACCOUNT_ID
+#
+# Required Worker secrets, set once with wrangler and NEVER stored in the repo:
+#   wrangler secret put HF_TOKEN --env production
+#   wrangler secret put SESSION_SIGNING_KEY --env production
+#
+# The workflow never prints, exports or interpolates a secret into a log line.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/worker/**'
+      - 'packages/core/**'
+      - '.github/workflows/deploy-worker.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v5.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --install-strategy=hoisted
+
+      - name: Typecheck and test the API
+        run: |
+          npm run typecheck -w @detectionforge/worker
+          npm test -w @detectionforge/core
+          npm test -w @detectionforge/worker
+
+      - name: Check deployment credentials are configured
+        id: creds
+        env:
+          HAS_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+        run: |
+          if [ "$HAS_TOKEN" != "true" ]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN is not configured; skipping deployment."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy Worker
+        if: steps.creds.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3.14.1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: packages/worker
+          command: deploy --env production

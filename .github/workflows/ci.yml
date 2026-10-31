@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege: CI only needs to read the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v5.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --install-strategy=hoisted
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit and integration tests
+        run: npm test
+
+      - name: Verify generated documentation is up to date
+        run: |
+          node scripts/generate-docs.mjs
+          if ! git diff --quiet -- docs/; then
+            echo "::error::docs/ is out of date. Run 'npm run docs' and commit the result."
+            git diff --stat -- docs/
+            exit 1
+          fi
+          echo "Generated documentation matches the code."
+
+      - name: Build all packages
+        run: npm run build
+
+      - name: Scan build artifacts for embedded secrets
+        run: node scripts/scan-build-artifacts.mjs packages/web/dist
+
+      - name: Verify no environment file was committed
+        run: |
+          set -euo pipefail
+          # Any tracked .env / .env.* / .dev.vars / key file, except the
+          # placeholder-only .env.example, fails the build.
+          tracked=$(git ls-files \
+            | grep -E '(^|/)(\.env(\..*)?|\.dev\.vars(\..*)?|.*\.pem|.*\.p12|.*\.key)$' \
+            | grep -v -x '.env.example' || true)
+          if [ -n "$tracked" ]; then
+            echo "::error::Secret-bearing file(s) are tracked by git:"
+            echo "$tracked"
+            exit 1
+          fi
+          echo "No tracked environment or key files."
+
+      - name: Upload frontend build
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: web-dist
+          path: packages/web/dist
+          retention-days: 7
+
+  dependency-audit:
+    name: Dependency vulnerability audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v5.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --install-strategy=hoisted
+
+      - name: Audit production dependencies
+        run: npm audit --audit-level=high

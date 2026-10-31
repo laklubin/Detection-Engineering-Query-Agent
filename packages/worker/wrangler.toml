@@ -1,0 +1,55 @@
+# DetectionForge AI — API layer
+#
+# SECRETS ARE NEVER STORED IN THIS FILE.
+# Set them once per environment with:
+#   wrangler secret put HF_TOKEN
+#   wrangler secret put SESSION_SIGNING_KEY
+#   wrangler secret put API_ACCESS_KEYS       # optional
+# Locally, put them in packages/worker/.dev.vars (git-ignored).
+
+name = "detectionforge-api"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+# Non-secret configuration only.
+[vars]
+HF_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
+HF_MODEL_FALLBACKS = "Qwen/Qwen2.5-72B-Instruct,mistralai/Mistral-Small-24B-Instruct-2501"
+HF_PROVIDER = "auto"
+HF_BASE_URL = "https://router.huggingface.co/v1"
+HF_TIMEOUT_MS = "45000"
+HF_MAX_RETRIES = "2"
+HF_MAX_OUTPUT_TOKENS = "4096"
+ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
+RATE_LIMIT_REQUESTS = "10"
+RATE_LIMIT_WINDOW_SECONDS = "300"
+DAILY_QUOTA_PER_SESSION = "40"
+SESSION_TTL_SECONDS = "3600"
+
+# Optional durable rate-limit / quota store. Create with:
+#   wrangler kv namespace create DFAI_RATE_LIMIT
+# then uncomment and paste the id. Without it the Worker falls back to
+# per-isolate in-memory counters, which are best-effort only.
+# [[kv_namespaces]]
+# binding = "RATE_LIMIT_KV"
+# id = "<your-kv-namespace-id>"
+
+[env.production]
+name = "detectionforge-api"
+workers_dev = false
+
+[env.production.vars]
+HF_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
+HF_MODEL_FALLBACKS = "Qwen/Qwen2.5-72B-Instruct,mistralai/Mistral-Small-24B-Instruct-2501"
+HF_PROVIDER = "auto"
+HF_BASE_URL = "https://router.huggingface.co/v1"
+HF_TIMEOUT_MS = "45000"
+HF_MAX_RETRIES = "2"
+HF_MAX_OUTPUT_TOKENS = "4096"
+# Replace with the exact GitHub Pages origin that serves the frontend.
+ALLOWED_ORIGINS = "https://laklubin.github.io"
+RATE_LIMIT_REQUESTS = "10"
+RATE_LIMIT_WINDOW_SECONDS = "300"
+DAILY_QUOTA_PER_SESSION = "40"
+SESSION_TTL_SECONDS = "3600"
