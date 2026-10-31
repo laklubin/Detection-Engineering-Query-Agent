@@ -123,9 +123,38 @@ export function checkPlaceholders(query: string): StructuralIssue[] {
   return issues;
 }
 
+/**
+ * Strip comments and quoted literals so that a construct check inspects only
+ * executable query text.
+ *
+ * Without this, a detection that legitimately searches for the *string*
+ * "| delete" would be flagged as containing a side-effecting command, even
+ * though the text sits safely inside an escaped literal and cannot execute.
+ */
+function executableTextOnly(query: string, platform?: PlatformId): string {
+  // Sigma is YAML: it has no pipeline operators to inject, and its values are
+  // frequently unquoted, so literal stripping would be both wrong and useless.
+  if (platform === 'sigma') return query;
+
+  const withoutComments = query
+    .split('\n')
+    .filter((line) => {
+      const t = line.trimStart();
+      return !(t.startsWith('//') || t.startsWith('--') || t.startsWith('#') || t.startsWith('```'));
+    })
+    .join('\n');
+
+  // Remove double- and single-quoted literals, honouring backslash escapes.
+  return withoutComments
+    .replace(/"(?:[^"\\\n]|\\.)*"/g, '""')
+    .replace(/'(?:[^'\n]|'')*'/g, "''");
+}
+
 /** Reject any query containing an executable shell/host escape marker. */
-export function checkNoExecution(query: string): StructuralIssue[] {
+export function checkNoExecution(query: string, platform?: PlatformId): StructuralIssue[] {
   const issues: StructuralIssue[] = [];
+  // Only executable text is inspected: a value inside a quoted literal is inert.
+  const body = executableTextOnly(query, platform);
   const dangerous: readonly { re: RegExp; what: string }[] = [
     { re: /\|\s*script\b/i, what: 'Splunk `script` command' },
     { re: /\|\s*(?:runshellscript|sendemail|outputlookup|collect|delete)\b/i, what: 'side-effecting SPL command' },
@@ -134,7 +163,7 @@ export function checkNoExecution(query: string): StructuralIssue[] {
     { re: /\bhttp_request\b/i, what: 'outbound request function' },
   ];
   for (const { re, what } of dangerous) {
-    if (re.test(query)) {
+    if (re.test(body)) {
       issues.push({
         severity: 'error',
         message: `${what} is not permitted in generated output: queries are read-only by policy.`,
@@ -213,7 +242,7 @@ export function checkPlatformShape(query: string, platform: PlatformId): Structu
 export function validateStructure(query: string, platform: PlatformId): StructuralIssue[] {
   return [
     ...checkPlaceholders(query),
-    ...checkNoExecution(query),
+    ...checkNoExecution(query, platform),
     ...checkBalanced(query, platform),
     ...checkPlatformShape(query, platform),
   ];

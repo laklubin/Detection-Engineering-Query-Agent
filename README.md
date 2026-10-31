@@ -190,11 +190,19 @@ Generated Sigma rules are additionally validated in CI by **pySigma**, the Sigma
 reference implementation: the emitted YAML is parsed, and every detection condition is
 resolved against the selections it references (`scripts/validate-sigma.py`).
 
+634 tests across the three packages. Coverage of the core package is 90% of statements
+and 78% of branches.
+
 Covers valid requirements, vendor and log-source selection, missing log-source handling,
 the two-use-case cap, all seven adapters, unrelated and prohibited requests, prompt
 injection, secret extraction, PII and credential sanitisation, malformed and oversized
 input, XSS payloads, Hugging Face failures, quota exhaustion, rate limiting, missing
 credentials, schema validation and export functionality.
+
+Every one of the 18 condition operators is additionally rendered through all seven
+adapters and asserted to reach the generated query. The predicate joiner discards empty
+strings, so an operator an adapter forgot to handle would silently vanish from a query
+that still looked valid — these tests make that impossible to ship.
 
 ## Deployment
 
