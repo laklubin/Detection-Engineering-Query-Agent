@@ -22,8 +22,11 @@ keywords = ["hf_"]
 
 [[rules]]
 id = "detectionforge-session-signing-key"
-description = "Session signing key assigned a real-looking value"
-regex = '''SESSION_SIGNING_KEY\s*[:=]\s*["']?(?!0{32})[A-Fa-f0-9]{32,}'''
+description = "Session signing key assigned a hex value"
+# NOTE: gitleaks uses Go's RE2 engine, which has no lookahead or backreferences.
+# The all-zero placeholder in .env.example is excluded via the allowlist below,
+# not via a negative lookahead.
+regex = '''SESSION_SIGNING_KEY\s*[:=]\s*["']?[A-Fa-f0-9]{32,}'''
 keywords = ["SESSION_SIGNING_KEY"]
 
 [[rules]]
@@ -41,6 +44,11 @@ paths = [
   # This file necessarily contains the patterns it searches for.
   '''(^|/)\.gitleaks\.toml$''',
   '''(^|/)package-lock\.json$''',
+  # Third-party and build output: not our source, and scanned separately by
+  # scripts/scan-build-artifacts.mjs before anything is published.
+  '''(^|/)node_modules/''',
+  '''(^|/)dist/''',
+  '''(^|/)coverage/''',
 ]
 
 regexes = [
