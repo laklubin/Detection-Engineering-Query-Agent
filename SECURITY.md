@@ -168,6 +168,7 @@ strings before it is parsed.
 | History secret scanning | `.github/workflows/secret-scan.yml` (gitleaks, `fetch-depth: 0`) |
 | Build artifact scanning | `scripts/scan-build-artifacts.mjs` in CI and before Pages deploy |
 | Dependency audit | `npm audit --audit-level=high` in CI |
+| Sigma rule validation | `scripts/validate-sigma.py` (pySigma reference implementation) in CI |
 | Workflow least privilege | `permissions: contents: read` by default; elevated only where required |
 | Action pinning | All third-party actions pinned to a commit SHA |
 

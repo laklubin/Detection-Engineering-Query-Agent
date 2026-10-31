@@ -186,6 +186,10 @@ evaluates the requested action, not the mere presence of adversarial vocabulary.
 npm test
 ```
 
+Generated Sigma rules are additionally validated in CI by **pySigma**, the Sigma
+reference implementation: the emitted YAML is parsed, and every detection condition is
+resolved against the selections it references (`scripts/validate-sigma.py`).
+
 Covers valid requirements, vendor and log-source selection, missing log-source handling,
 the two-use-case cap, all seven adapters, unrelated and prohibited requests, prompt
 injection, secret extraction, PII and credential sanitisation, malformed and oversized

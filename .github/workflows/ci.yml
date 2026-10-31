@@ -43,6 +43,8 @@ jobs:
 
       - name: Verify generated documentation is up to date
         run: |
+          # generate-docs imports the compiled core package, so build it first.
+          npm run build -w @detectionforge/core
           node scripts/generate-docs.mjs
           if ! git diff --quiet -- docs/; then
             echo "::error::docs/ is out of date. Run 'npm run docs' and commit the result."
@@ -78,6 +80,39 @@ jobs:
           name: web-dist
           path: packages/web/dist
           retention-days: 7
+
+  sigma-validation:
+    name: Validate generated Sigma rules with pySigma
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v5.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+
+      - name: Install pySigma
+        run: pip install --disable-pip-version-check sigma-cli
+
+      - name: Build core and export generated Sigma rules
+        run: |
+          npm ci --install-strategy=hoisted
+          npm run build -w @detectionforge/core
+          node scripts/export-sigma-rules.mjs build/sigma-rules
+
+      - name: Validate with the Sigma reference implementation
+        run: python3 scripts/validate-sigma.py build/sigma-rules
 
   dependency-audit:
     name: Dependency vulnerability audit

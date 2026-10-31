@@ -190,6 +190,11 @@ Spotter index scope, FortiSIEM filter expression, Sigma detection or correlation
 Sigma additionally round-trips: emitted YAML is re-parsed, required keys are checked, and
 every identifier referenced by a `condition` must be a defined selection.
 
+CI goes one step further for Sigma: `scripts/export-sigma-rules.mjs` writes the
+generated rules to disk and `scripts/validate-sigma.py` parses them with **pySigma**,
+the reference implementation, resolving every condition against the selections it
+references. That is third-party validation of the emitted YAML, not a self-check.
+
 None of this executes a query. The taxonomy is deliberately `validated_syntax`, not
 `validated`.
 

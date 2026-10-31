@@ -16,6 +16,12 @@ updates:
       production-patches:
         dependency-type: production
         update-types: [patch]
+    ignore:
+      # Major upgrades of the build toolchain are breaking by definition and
+      # need a human to migrate. Security updates for a vulnerable version are
+      # still opened regardless of this rule.
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
