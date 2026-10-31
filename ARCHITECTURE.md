@@ -198,6 +198,38 @@ references. That is third-party validation of the emitted YAML, not a self-check
 None of this executes a query. The taxonomy is deliberately `validated_syntax`, not
 `validated`.
 
+## Template mode
+
+A language model is not always available: the public site is a static bundle that cannot
+hold a credential, and a self-hosted deployment may have no `HF_TOKEN`. Rather than
+failing, or showing one fixed example, the application answers from a catalogue of
+human-authored detection templates in `packages/core/src/templates/`.
+
+```
+requirement -> sanitise -> guardrails -> score against catalogue
+            -> adapt best matches to the selected telemetry
+            -> DetectionSpec -> the same seven adapters
+```
+
+Scoring is deliberately simple and auditable:
+
+| Evidence | Weight |
+| --- | --- |
+| Multi-word phrase ("password spray") | 5 |
+| Single word claimed by exactly one template ("lsass") | 4 |
+| Single word several templates share ("beacon") | 2 |
+| Selected telemetry matches the template, and something else already matched | +3 |
+
+Distinctiveness is derived from the catalogue at load time rather than hand-labelled, so
+the weighting stays correct as templates are added. Matching tolerates ordinary
+inflection and filler words — "disable defender" matches "disabled Defender", "clear
+event log" matches "cleared the event log" — but only through a fixed list of real
+English suffixes, so "spray" cannot match "sprayer".
+
+Below the match threshold the engine returns `needs_clarification`. This is the central
+design decision of the whole mode: a template engine that always returns *something* would
+produce confident, well-formatted, wrong detections, which is worse than no answer.
+
 ## Frontend
 
 React 19 + Vite + Tailwind 4, no UI component library.

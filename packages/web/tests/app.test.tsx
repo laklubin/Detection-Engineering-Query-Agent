@@ -46,7 +46,7 @@ describe('application shell', () => {
 
   it('shows a generation status region', async () => {
     render(<App />);
-    expect(screen.getByTestId('status-line').textContent).toMatch(/demo mode is available|Ready/i);
+    expect(screen.getByTestId('status-line').textContent).toMatch(/template mode|Ready/i);
   });
 
   it('lists searchable log sources filtered by the typed query', async () => {
@@ -87,11 +87,10 @@ describe('generation flow', () => {
     return user;
   }
 
-  it('renders two use cases with all seven platform tabs', async () => {
+  it('renders a matched use case with all seven platform tabs', async () => {
     await generate('Detect suspicious PowerShell execution in Sysmon process creation events');
 
     await waitFor(() => expect(screen.getByTestId('use-case-0')).toBeTruthy(), { timeout: 8000 });
-    expect(screen.getByTestId('use-case-1')).toBeTruthy();
 
     const firstCard = screen.getByTestId('use-case-0');
     for (const platform of ['splunk', 'sentinel', 'qradar', 'elastic', 'securonix', 'fortisiem', 'sigma']) {
@@ -105,10 +104,18 @@ describe('generation flow', () => {
     expect(screen.getByTestId('commercial-notice').textContent).toBe(COMMERCIAL_NOTICE);
   });
 
-  it('labels demo output as a synthetic fixture', async () => {
+  it('labels output as template-matched, not model-written', async () => {
     await generate('Detect suspicious PowerShell execution in Sysmon process creation events');
     await waitFor(() => expect(screen.getByTestId('demo-banner')).toBeTruthy(), { timeout: 8000 });
-    expect(screen.getByTestId('demo-banner').textContent).toMatch(/not.*produced by a language model/i);
+    const banner = screen.getByTestId('demo-banner').textContent ?? '';
+    expect(banner).toMatch(/template mode/i);
+    expect(banner).toMatch(/not written by a model/i);
+  });
+
+  it('answers different requirements with different detections', async () => {
+    await generate('Detect ransomware deleting shadow copies before encryption');
+    await waitFor(() => expect(screen.getByTestId('use-case-0')).toBeTruthy(), { timeout: 8000 });
+    expect(screen.getByTestId('use-case-0').textContent).toMatch(/shadow copy|recovery/i);
   });
 
   it('switches the displayed query when a platform tab is selected', async () => {
@@ -154,10 +161,10 @@ describe('generation flow', () => {
     expect(writeText.mock.calls[0]?.[0] ?? '').toContain('index=sysmon');
   });
 
-  it('asks a clarifying question when the telemetry is ambiguous', async () => {
-    await generate('Detect lateral movement and alert the SOC team');
-    await waitFor(() => expect(screen.getByTestId('clarifying-question')).toBeTruthy(), { timeout: 8000 });
-    expect(screen.getByTestId('clarifying-question').textContent).toMatch(/vendor and log source/i);
+  it('asks a clarifying question when nothing matches, instead of guessing', async () => {
+    await generate('Detect anomalous behaviour of some kind somewhere');
+    await waitFor(() => expect(screen.getByTestId('clarifying-question')).toBeTruthy(), { timeout: 15000 });
+    expect(screen.getByTestId('clarifying-question').textContent).toMatch(/no detection template matched/i);
     expect(screen.queryByTestId('use-case-0')).toBeNull();
   });
 });

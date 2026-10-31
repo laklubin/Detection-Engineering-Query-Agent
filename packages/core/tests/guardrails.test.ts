@@ -136,7 +136,8 @@ describe('legitimate defensive detection requirements are allowed', () => {
 
 describe('selector context lowers the free-text signal requirement', () => {
   it('accepts a terse requirement when vendor and log source are selected', () => {
-    const terse = 'Account lockouts across many hosts';
+    // One signal only ("lockouts"): not enough on its own, enough with context.
+    const terse = 'Account lockouts repeatedly';
     expect(check(terse).allowed).toBe(false);
     expect(check(terse, { vendor: true, logSource: true }).allowed).toBe(true);
   });

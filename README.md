@@ -56,9 +56,9 @@ These are enforced in code and covered by tests, not just stated:
 - **Inference failure is never faked.** If Hugging Face is unavailable, out of credits or
   returns schema-invalid output, the request fails with a specific error. No fallback
   content is passed off as model output.
-- **Demo mode is labelled.** With no `HF_TOKEN` configured the backend serves a synthetic
-  fixture through the identical pipeline, and the response and UI both say it was *not*
-  produced by a language model.
+- **Template mode is labelled.** With no `HF_TOKEN` configured, the application answers
+  from a catalogue of human-authored detection templates through the identical pipeline,
+  and the response and UI both say it was *not* produced by a language model.
 
 ## Security posture
 
@@ -78,12 +78,31 @@ These are enforced in code and covered by tests, not just stated:
 
 Full details: [`SECURITY.md`](SECURITY.md). Design: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
+## Two ways it answers
+
+| | Live inference | Template mode |
+| --- | --- | --- |
+| Needs a credential | yes, `HF_TOKEN` on the backend | no |
+| Where it runs | Cloudflare Worker | the Worker, or entirely in your browser |
+| Detection logic from | a language model, schema-validated | a catalogue of human-authored templates |
+| Handles a novel requirement | yes | no — it says so instead of guessing |
+| Guardrails, sanitisation, 7 adapters, validation | identical | identical |
+
+The public GitHub Pages site runs in **template mode**, because a static bundle is world
+readable and could not hold an inference token safely. Your requirement is matched
+against the catalogue in your own browser; nothing you type leaves the page.
+
+When nothing matches closely enough, template mode asks you to rephrase rather than
+return the nearest entry. Returning a confident-looking detection for a requirement it
+did not understand is the one failure mode worth refusing outright.
+
 ## Repository layout
 
 ```
 packages/
   core/     Guardrails, sanitiser, detection IR, field registry,
-            7 SIEM adapters, validators, prompt, HF client, orchestrator
+            7 SIEM adapters, validators, prompt, HF client, orchestrator,
+            detection-template catalogue and matching engine
   worker/   Cloudflare Worker API: auth, CORS, rate limits, quotas, headers
   web/      React + TypeScript + Vite + Tailwind frontend
 scripts/    Doc generation and build-artifact secret scanning
@@ -190,8 +209,12 @@ Generated Sigma rules are additionally validated in CI by **pySigma**, the Sigma
 reference implementation: the emitted YAML is parsed, and every detection condition is
 resolved against the selections it references (`scripts/validate-sigma.py`).
 
-634 tests across the three packages. Coverage of the core package is 90% of statements
-and 78% of branches.
+798 tests across the three packages.
+
+Every template in the catalogue is covered by an invariant: its own example phrasing must
+survive sanitisation, pass the guardrails, and rank that template first — so no entry can
+become unreachable. Each template is also built against every telemetry family it claims
+and rendered through all seven adapters.
 
 Covers valid requirements, vendor and log-source selection, missing log-source handling,
 the two-use-case cap, all seven adapters, unrelated and prohibited requests, prompt

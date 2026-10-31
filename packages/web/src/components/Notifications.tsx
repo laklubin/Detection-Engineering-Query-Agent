@@ -93,12 +93,17 @@ export function DemoBanner({ model }: { model: string | null }): ReactNode {
       className="rounded-xl border border-violet-500/40 bg-violet-500/10 p-4 text-sm text-violet-100"
       data-testid="demo-banner"
     >
-      <p className="font-semibold text-violet-200">Demo mode — output is a synthetic fixture</p>
+      <p className="font-semibold text-violet-200">
+        Template mode — matched from the built-in detection catalogue, not written by a model
+      </p>
       <p className="mt-1 leading-relaxed">
-        No Hugging Face token is configured on the backend, so these detection use cases come from a built-in
-        synthetic example and were <strong>not</strong> produced by a language model. Everything else — guardrails,
-        sanitisation, the seven adapters and the validation checks — runs exactly as it does in live mode.
-        {model ? ` Reported model: ${model}.` : ''}
+        No inference credential is configured, so your requirement was matched against a catalogue of
+        human-authored detection templates. The detection logic, MITRE mapping, field mappings, thresholds and
+        validation below are all real, and guardrails, sanitisation and the seven adapters run exactly as they do
+        with a model attached. What is missing is a model&rsquo;s ability to reason about a requirement no template
+        covers — when nothing matches closely, this mode asks you to rephrase rather than return something that
+        merely looks plausible.
+        {model ? ` Generator: ${model}.` : ''}
       </p>
     </div>
   );

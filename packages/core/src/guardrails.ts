@@ -109,8 +109,12 @@ const DETECTION_SIGNALS: readonly { id: string; pattern: RegExp }[] = [
   { id: 'detect_verb', pattern: /\b(?:detect|detects|detection|detecting|alert|alerting|identify|monitor|monitoring|flag|surface|spot|catch|hunt|hunting|triage|investigate)\b/i },
   { id: 'rule_artifact', pattern: /\b(?:rule|rules|query|queries|search|use\s*case|usecase|signature|analytic|analytics|correlation|notable|offense|dashboard|sigma|spl|kql|aql|eql|esql|yara|spotter)\b/i },
   { id: 'siem_platform', pattern: /\b(?:siem|splunk|sentinel|qradar|elastic|elasticsearch|securonix|fortisiem|chronicle|sumo\s*logic|exabeam|arcsight|soc|xdr|edr)\b/i },
-  { id: 'telemetry', pattern: /\b(?:log|logs|logging|logins?|logons?|authentication|authenticate[sd]?|event|events|event\s*id|telemetry|sysmon|auditd|cloudtrail|sign\s*-?\s*ins?|firewall|proxy|dns|netflow|edr|winlog|eventlog|syslog)\b/i },
-  { id: 'threat_behaviour', pattern: /\b(?:suspicious|malicious|anomalous|unauthori[sz]ed|lateral\s+movement|privilege\s+escalation|persistence|exfiltration|command\s+and\s+control|brute\s*force|password\s+spray(?:ing)?|credential\s+(?:access|dumping|theft)|phishing|ransomware|beacon(?:ing)?|living\s+off\s+the\s+land|impossible\s+travel|failed\s+log(?:in|on)s?|account\s+lockouts?|lockouts?|mfa\s+fatigue|token\s+theft|dll\s+(?:injection|side\s*loading)|process\s+injection|defense\s+evasion|tamper)\b/i },
+  { id: 'telemetry', pattern: /\b(?:log|logs|logging|logins?|logons?|authentication|authenticate[sd]?|event|events|event\s*id|telemetry|sysmon|auditd|cloudtrail|sign\s*-?\s*ins?|firewall|proxy|dns|netflow|edr|winlog|eventlog|syslog|network|traffic|connections?|egress|endpoints?|hosts?|workstations?|servers?|process(?:es)?|command\s*line)\b/i },
+  {
+    id: 'threat_behaviour',
+    pattern:
+      /\b(?:suspicious|malicious|anomalous|unauthori[sz]ed|lateral\s+movement|lateral|privilege\s+escalation|persistence|exfiltration|exfil|command\s+and\s+control|brute\s*force|password\s+spray(?:ing)?|credential\s+(?:access|dumping|theft)|credentials?|phishing|ransomware|beacon(?:ing)?|living\s+off\s+the\s+land|impossible\s+travel|improbable\s+travel|failed\s+log(?:in|on)s?|account\s+lockouts?|lockouts?|mfa\s+fatigue|token\s+theft|dll\s+(?:injection|side\s*loading)|process\s+injection|defense\s+evasion|tamper(?:ing)?|web\s*shells?|shadow\s+cop(?:y|ies)|scheduled\s+tasks?|run\s+keys?|autoruns?|encoded\s+command|obfuscat(?:ed|ion)|malware|trojan|backdoors?|rootkits?|keyloggers?|spyware|droppers?|tunnel(?:ling|ing)?|intrusion|compromise[ds]?)\b/i,
+  },
   { id: 'mitre', pattern: /\b(?:mitre|att&ck|attack)\b|\bT\d{4}(?:\.\d{3})?\b/i },
 ];
 

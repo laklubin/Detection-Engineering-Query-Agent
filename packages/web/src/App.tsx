@@ -89,7 +89,7 @@ export function App(): ReactNode {
         if (!cancelled) {
           setBackendReachable(false);
           setPhase('idle');
-          setStatusLine('No backend configured. Local demo mode is available.');
+          setStatusLine('Template mode: matching against the built-in detection catalogue in your browser.');
         }
         return;
       }
@@ -103,13 +103,13 @@ export function App(): ReactNode {
         setStatusLine(
           healthPayload.mode === 'live'
             ? `Connected. Live inference via ${healthPayload.model ?? 'configured model'}.`
-            : 'Connected. Backend is in demo mode (no inference token configured).',
+            : 'Connected. Backend is in template mode (no inference credential configured).',
         );
       } catch {
         if (cancelled) return;
         setBackendReachable(false);
         setPhase('idle');
-        setStatusLine('Backend unreachable. Local demo mode is available.');
+        setStatusLine('Backend unreachable. Running in template mode in your browser.');
       }
     }
     void bootstrap();
@@ -123,7 +123,7 @@ export function App(): ReactNode {
       setPhase('generating');
       setError(null);
       setResult(null);
-      setStatusLine(localDemo ? 'Generating labelled demo output locally…' : 'Validating input and generating…');
+      setStatusLine(localDemo ? 'Matching against the detection template catalogue…' : 'Validating input and generating…');
 
       const request = {
         requirement: form.requirement,
@@ -134,8 +134,9 @@ export function App(): ReactNode {
       try {
         let response: GenerateResponse;
         if (localDemo) {
-          // Runs the identical core pipeline in the browser against the labelled
-          // synthetic fixture. No credential is involved and nothing is sent out.
+          // Runs the identical core pipeline in the browser against the
+          // detection-template catalogue. No credential is involved and
+          // nothing the user typed leaves the page.
           const outcome = await generateDetections(request, { mode: 'demo' });
           response = outcome.response;
         } else {
@@ -148,7 +149,7 @@ export function App(): ReactNode {
         } else {
           setStatusLine(
             `Generated ${response.useCases.length} use case${response.useCases.length === 1 ? '' : 's'} × ` +
-              `${PLATFORM_IDS.length} formats${response.mode === 'demo' ? ' (demo output)' : ''}.`,
+              `${PLATFORM_IDS.length} formats${response.mode === 'demo' ? ' (template mode)' : ''}.`,
           );
         }
       } catch (caught) {
@@ -212,8 +213,14 @@ export function App(): ReactNode {
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             {effectiveMode ? (
-              <Chip title={effectiveMode === 'live' ? 'Live inference' : 'Demo output — synthetic fixture'}>
-                {effectiveMode === 'live' ? 'live inference' : 'demo mode'}
+              <Chip
+                title={
+                  effectiveMode === 'live'
+                    ? 'Live model inference'
+                    : 'Matched from the built-in detection template catalogue, not written by a model'
+                }
+              >
+                {effectiveMode === 'live' ? 'live inference' : 'template mode'}
               </Chip>
             ) : null}
             <Chip title="Supported query formats">{PLATFORM_IDS.length} formats</Chip>
@@ -253,12 +260,13 @@ export function App(): ReactNode {
 
           {offline && ALLOW_LOCAL_DEMO ? (
             <div className="rounded-xl border border-violet-500/40 bg-violet-500/10 p-4 text-sm text-violet-100">
-              <p className="font-semibold text-violet-200">Backend not available</p>
+              <p className="font-semibold text-violet-200">Running in template mode</p>
               <p className="mt-1 leading-relaxed">
-                The secured API is not configured or cannot be reached from this origin, so live inference is
-                unavailable. Generating will run the identical validation, guardrail and adapter pipeline in your
-                browser against a labelled synthetic fixture. No Hugging Face token exists in the frontend, and none
-                is ever required for this path.
+                No inference backend is configured for this deployment, so generation runs entirely in your browser:
+                your requirement is matched against a catalogue of human-authored detection templates and rendered
+                through the identical guardrail, sanitisation, adapter and validation pipeline. Nothing you type
+                leaves your browser, and no Hugging Face token exists in this page — a public static bundle could
+                never hold one safely.
               </p>
             </div>
           ) : null}

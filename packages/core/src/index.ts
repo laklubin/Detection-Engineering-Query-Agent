@@ -24,3 +24,13 @@ export type { ChatMessage, ClientDeps, FetchLike, HuggingFaceConfig, InferenceRe
 export { generateDetections, GenerationError, inferTelemetryHints } from './llm/generate.js';
 export type { GenerationConfig, GenerationDeps, GenerationOutcome } from './llm/generate.js';
 export { DEMO_MODEL_RESPONSE, DEMO_CLARIFICATION_RESPONSE } from './demo/fixtures.js';
+export {
+  TEMPLATES,
+  MATCH_THRESHOLD,
+  generateFromTemplates,
+  rankTemplates,
+  scoreTemplate,
+  buildSpec,
+  TemplateValidationError,
+} from './templates/engine.js';
+export type { DetectionTemplate, TemplateContext, TemplateMatch, OfflineGenerationInput } from './templates/engine.js';

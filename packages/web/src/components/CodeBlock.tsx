@@ -21,7 +21,7 @@ export function CodeBlock({
 
   return (
     <div
-      className="overflow-auto rounded-lg border border-[var(--color-forge-border)] bg-[#060a12]"
+      className="overflow-auto rounded-lg border border-[var(--color-forge-border)] bg-black"
       style={{ maxHeight }}
     >
       <pre className="dfai-code m-0 p-3">

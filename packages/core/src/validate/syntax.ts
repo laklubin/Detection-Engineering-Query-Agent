@@ -155,14 +155,30 @@ export function checkNoExecution(query: string, platform?: PlatformId): Structur
   const issues: StructuralIssue[] = [];
   // Only executable text is inspected: a value inside a quoted literal is inert.
   const body = executableTextOnly(query, platform);
-  const dangerous: readonly { re: RegExp; what: string }[] = [
-    { re: /\|\s*script\b/i, what: 'Splunk `script` command' },
-    { re: /\|\s*(?:runshellscript|sendemail|outputlookup|collect|delete)\b/i, what: 'side-effecting SPL command' },
-    { re: /\bexternaldata\s*\(/i, what: 'KQL `externaldata` operator' },
-    { re: /\b(?:evaluate\s+python|evaluate\s+r)\b/i, what: 'KQL plugin execution' },
-    { re: /\bhttp_request\b/i, what: 'outbound request function' },
+  /**
+   * Each pattern is scoped to the platforms whose language actually has the
+   * construct. Running SPL pipeline patterns against Sigma YAML or AQL finds
+   * only false positives: a Sigma regex alternation such as
+   * `(stop|delete|config)` is not a Splunk `| delete` command.
+   */
+  const dangerous: readonly { re: RegExp; what: string; platforms: readonly PlatformId[] }[] = [
+    { re: /\|\s*script\b/i, what: 'Splunk `script` command', platforms: ['splunk'] },
+    {
+      re: /\|\s*(?:runshellscript|sendemail|outputlookup|collect|delete)\b/i,
+      what: 'side-effecting SPL command',
+      platforms: ['splunk'],
+    },
+    { re: /\bexternaldata\s*\(/i, what: 'KQL `externaldata` operator', platforms: ['sentinel'] },
+    { re: /\b(?:evaluate\s+python|evaluate\s+r)\b/i, what: 'KQL plugin execution', platforms: ['sentinel'] },
+    {
+      re: /\bhttp_request\b/i,
+      what: 'outbound request function',
+      platforms: ['splunk', 'sentinel', 'elastic', 'qradar', 'securonix', 'fortisiem', 'sigma'],
+    },
   ];
-  for (const { re, what } of dangerous) {
+  for (const { re, what, platforms } of dangerous) {
+    // Unknown platform: apply every pattern, which is the conservative choice.
+    if (platform !== undefined && !platforms.includes(platform)) continue;
     if (re.test(body)) {
       issues.push({
         severity: 'error',

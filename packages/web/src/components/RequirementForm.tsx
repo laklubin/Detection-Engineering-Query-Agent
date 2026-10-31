@@ -1,4 +1,5 @@
 import type { ReactNode, RefObject } from 'react';
+import { TEMPLATES } from '@detectionforge/core';
 import type { Catalog } from '../lib/api.js';
 import { LogSourceCombobox } from './LogSourceCombobox.js';
 import { Spinner } from './Primitives.js';
@@ -9,11 +10,13 @@ export interface FormState {
   logSourceId: string;
 }
 
-const EXAMPLES: readonly string[] = [
-  'Detect suspicious PowerShell execution followed by external network communication.',
-  'Detect multiple failed logins followed by successful authentication.',
-  'Alert on a service account authenticating interactively for the first time.',
-];
+/**
+ * Suggestions come from the detection-template catalogue itself, so they can
+ * never drift from what the application can actually answer. Each one is
+ * covered by a test asserting it passes the guardrails and reaches its
+ * template.
+ */
+const EXAMPLES: readonly string[] = TEMPLATES.map((t) => t.example);
 
 export function RequirementForm({
   catalog,
@@ -146,9 +149,9 @@ export function RequirementForm({
 
       <div className="border-t border-[var(--color-forge-border)] pt-3">
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-forge-muted)]">
-          Try an example
+          {EXAMPLES.length} detection patterns available — try one
         </p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex max-h-60 flex-wrap gap-2 overflow-y-auto pr-1">
           {EXAMPLES.map((example) => (
             <button
               key={example}

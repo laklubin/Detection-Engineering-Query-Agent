@@ -1,13 +1,15 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-forge-bg: #070b14;
-  --color-forge-panel: #0d1424;
-  --color-forge-panel-2: #121b2e;
-  --color-forge-border: #1e2a42;
-  --color-forge-border-strong: #2b3b5c;
-  --color-forge-text: #e6edf8;
-  --color-forge-muted: #93a4c2;
+  /* True-black console theme. Surfaces step up in near-black greys so panels
+     stay legible on OLED without introducing a blue cast. */
+  --color-forge-bg: #000000;
+  --color-forge-panel: #0a0a0a;
+  --color-forge-panel-2: #111111;
+  --color-forge-border: #1f1f1f;
+  --color-forge-border-strong: #303030;
+  --color-forge-text: #ededed;
+  --color-forge-muted: #8b8b8b;
   --color-forge-accent: #22d3ee;
   --color-forge-accent-2: #34d399;
   --color-forge-warn: #fbbf24;
@@ -22,10 +24,12 @@
 
   body {
     margin: 0;
+    /* Very low-intensity accent wash so the page reads as black, not navy. */
     background:
-      radial-gradient(1100px 520px at 12% -12%, rgba(34, 211, 238, 0.11), transparent 60%),
-      radial-gradient(900px 520px at 88% 0%, rgba(52, 211, 153, 0.09), transparent 58%),
+      radial-gradient(1200px 560px at 10% -14%, rgba(34, 211, 238, 0.055), transparent 62%),
+      radial-gradient(900px 520px at 90% -4%, rgba(52, 211, 153, 0.04), transparent 60%),
       var(--color-forge-bg);
+    background-attachment: fixed;
     color: var(--color-forge-text);
     font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -44,7 +48,7 @@
 
 @layer components {
   .dfai-panel {
-    background: color-mix(in srgb, var(--color-forge-panel) 88%, transparent);
+    background: color-mix(in srgb, var(--color-forge-panel) 82%, transparent);
     border: 1px solid var(--color-forge-border);
     border-radius: 0.875rem;
     backdrop-filter: blur(6px);
@@ -100,7 +104,7 @@
   }
 
   .dfai-btn-ghost:hover:not(:disabled) {
-    background: #18233b;
+    background: #1b1b1b;
   }
 
   .dfai-chip {
@@ -129,12 +133,12 @@
 
 /* Syntax highlighting tokens. Applied as class names on escaped text nodes
    only — the application never injects HTML. */
-.tok-comment { color: #5d7291; font-style: italic; }
+.tok-comment { color: #6b7280; font-style: italic; }
 .tok-string  { color: #7ee3b8; }
 .tok-number  { color: #f0b86e; }
 .tok-keyword { color: #7cc4ff; font-weight: 600; }
 .tok-command { color: #c5a3ff; font-weight: 600; }
 .tok-field   { color: #e6edf8; }
-.tok-op      { color: #9fb3d1; }
+.tok-op      { color: #a3a3a3; }
 .tok-key     { color: #7cc4ff; }
 .tok-warn    { color: #fca5a5; background: rgba(248, 113, 113, 0.12); border-radius: 3px; padding: 0 2px; }

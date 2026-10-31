@@ -19,5 +19,8 @@ export default defineConfig(({ command }) => ({
     environment: 'jsdom',
     include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
     globals: true,
+    // Typing a full requirement through userEvent and rendering seven
+    // syntax-highlighted queries takes longer than the 5s default.
+    testTimeout: 20_000,
   },
 }));
